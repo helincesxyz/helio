@@ -1,43 +1,58 @@
-import { getAccountState, getLearningHistory, getRiskConfig, getStatus, getVerify } from "./api/client";
-import { AccountPanel } from "./components/AccountPanel";
-import { RiskConfigView } from "./components/RiskConfigView";
-import { StatusBanner } from "./components/StatusBanner";
-import { TradeIntentFeed } from "./components/TradeIntentFeed";
-import { VerificationChecklist } from "./components/VerificationChecklist";
-import { usePolling } from "./hooks/usePolling";
+import { BrowserRouter as Router, Navigate, Route, Routes } from "react-router-dom";
+import { NavRail } from "./components/layout/NavRail";
+import { HelioDataProvider } from "./context/HelioDataContext";
+import { Agent } from "./pages/Agent";
+import { Debug } from "./pages/Debug";
+import { Home } from "./pages/Home";
+import { Decisions } from "./pages/strategy/Decisions";
+import { Memory } from "./pages/strategy/Memory";
+import { Overview } from "./pages/strategy/Overview";
+import { Performance } from "./pages/strategy/Performance";
+import { StrategyLayout } from "./pages/strategy/StrategyLayout";
+import { Trades } from "./pages/strategy/Trades";
+
+function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex bg-bg text-ink">
+      <NavRail />
+      <div className="flex-1">{children}</div>
+    </div>
+  );
+}
 
 export default function App() {
-  const status = usePolling(getStatus, 5000);
-  const verify = usePolling(getVerify, 5000);
-  const history = usePolling(() => getLearningHistory(20), 5000);
-  const account = usePolling(getAccountState, 5000);
-  const riskConfig = usePolling(getRiskConfig, 15000);
-
   return (
-    <main style={{ fontFamily: "system-ui, sans-serif", maxWidth: 960, margin: "0 auto", padding: "1rem" }}>
-      <h1>Helio</h1>
-      <StatusBanner status={status.data} />
-      {status.error && <p role="alert">Could not reach Helio service: {status.error}</p>}
-
-      <section>
-        <h2>Verification checklist</h2>
-        <VerificationChecklist rows={verify.data} />
-      </section>
-
-      <section>
-        <h2>Account (read-only)</h2>
-        <AccountPanel account={account.data ?? null} />
-      </section>
-
-      <section>
-        <h2>Active risk limits</h2>
-        <RiskConfigView config={riskConfig.data} />
-      </section>
-
-      <section>
-        <h2>Recent trade intents</h2>
-        <TradeIntentFeed events={history.data} />
-      </section>
-    </main>
+    <HelioDataProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route
+            path="/agent"
+            element={
+              <AppShell>
+                <Agent />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/strategy"
+            element={
+              <AppShell>
+                <StrategyLayout />
+              </AppShell>
+            }
+          >
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<Overview />} />
+            <Route path="performance" element={<Performance />} />
+            <Route path="decisions" element={<Decisions />} />
+            <Route path="trades" element={<Trades />} />
+            <Route path="memory" element={<Memory />} />
+          </Route>
+          <Route path="/debug" element={<Debug />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </HelioDataProvider>
   );
 }

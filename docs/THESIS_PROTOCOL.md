@@ -24,6 +24,11 @@ GATE 2 is read-only reasoning only — no execution tools are used or needed.
 2. **Reshape into a CandleBundle**: `{"symbol": "...", "tf_4h": [...],
    "tf_1h": [...], "tf_15m": [...]}`, each candle as
    `{"ts", "o", "h", "l", "c", "vol"}` (matching `schemas.market.Candle`).
+   Also **`POST /state/market`** with a `MarketSnapshot` built from the 1H
+   (or finer) candles: `{"instId": "...", "last_price": "...", "candles":
+   [...]}` — this is what the frontend's price chart (Strategy → Overview)
+   reads via `GET /state/market?instId=...`. Purely a UI convenience; it
+   does not affect GATE 2/3 decisions.
 3. **`POST /thesis/prepare`** with the bundle. Helio computes EMA20/50/200,
    ATR, volume ratio, swing high/low, price change, volatility, the regime,
    and the 7-item evidence checklist — all deterministically, in Python.
