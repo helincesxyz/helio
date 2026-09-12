@@ -29,6 +29,9 @@ frontend/tsconfig.tsbuildinfo
 backend/config/risk_config.yaml
 backend/config/strategy_config.yaml
 backend/config/guard_config.yaml
+backend/config/guard_profile_low.yaml
+backend/config/guard_profile_balanced.yaml
+backend/config/guard_profile_high.yaml
 
 # --- OS / editor ---
 .DS_Store

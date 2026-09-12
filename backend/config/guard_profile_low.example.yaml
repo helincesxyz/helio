@@ -1,0 +1,29 @@
+# Copy to guard_profile_low.yaml (gitignored) and adjust before running Helio.
+# "Low" risk preference — smaller caps, higher confidence/risk-reward bar.
+# The hard-invariant fields below (symbol/instrument/leverage/sides/
+# lot_size/min_size) MUST be identical across all three guard_profile_*
+# files — build_app_state() asserts this at startup and refuses to start
+# if it's ever violated. Only the bounded numeric knobs may differ.
+
+policy_version: guard_v1
+
+allowed_symbols:
+  - BTC-USDT
+allowed_instrument_types:
+  - SPOT
+max_leverage: 1.0
+allowed_sides:
+  - buy
+max_simultaneous_positions: 1
+
+max_notional_per_trade_usd: 25.0
+max_daily_loss_usd: 15.0
+max_portfolio_exposure_pct: 10.0
+min_risk_reward: 2.0
+min_confidence: 0.75
+
+max_market_data_age_seconds: 900
+max_account_state_age_seconds: 900
+
+lot_size: "0.00000001"
+min_size: "0.00001"

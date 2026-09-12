@@ -125,11 +125,16 @@ JSON that Claude Code already received back from an MCP tool call.
   tuned or backtested — the numeric thresholds are documented, sane
   defaults meant to be adjusted via `backend/config/guard_config.yaml`.
 - The frontend's consumer-facing Low/Balanced/High risk selector
-  (`frontend/src/lib/riskProfiles.ts`) is a **client-side preview only**: it
-  scales the one real active `GuardConfig` (fetched via `GET /guard/config`)
-  by a documented factor for display purposes. It does not change what
-  `GuardEngine` actually enforces — only "Balanced" (1x) matches the real
-  policy today. Per-preference backend enforcement (loading a different
-  `GuardConfig` per request/user) is a real future change, not implemented
-  here, since `AppState.guard_engine` is currently a single process-wide
-  singleton built once at startup.
+  (`frontend/src/components/risk/RiskSelector.tsx`) reads three real,
+  independent `GuardConfig` profiles via `GET /guard/profiles`
+  (`backend/config/guard_profile_{low,balanced,high}.yaml`) — not a
+  client-side scaling preview. `AppState.guard_profiles` loads all three
+  once at startup, immutably; `AppState.get_guard_engine(profile)`
+  constructs a fresh, stateless `GuardEngine` per request (no shared
+  mutable state). `build_app_state()` asserts a hard invariant at startup:
+  the three profiles must agree on every safety-critical field (allowed
+  symbol/instrument/leverage/side, exchange lot/min size) — only the
+  bounded numeric knobs (notional/daily-loss/exposure/confidence/
+  risk-reward caps) may vary between tiers. `GuardTradeIntent.risk_profile`
+  selects which profile `/guard/evaluate` actually applies; an unrecognized
+  value is rejected (422) rather than silently falling back.

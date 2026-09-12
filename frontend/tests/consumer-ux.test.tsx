@@ -73,7 +73,7 @@ describe("summarizePlainEnglish", () => {
 });
 
 describe("buildRiskTierSummary", () => {
-  const config = {
+  const balancedConfig = {
     policy_version: "guard_v1",
     allowed_symbols: ["BTC-USDT"],
     allowed_instrument_types: ["SPOT"],
@@ -86,17 +86,18 @@ describe("buildRiskTierSummary", () => {
     min_risk_reward: 1.5,
     min_confidence: 0.6,
   };
+  const lowConfig = { ...balancedConfig, max_notional_per_trade_usd: 25, max_daily_loss_usd: 15 };
 
-  it("balanced matches the real active config exactly", () => {
-    const summary = buildRiskTierSummary(config, "balanced");
+  it("reads real per-tier numbers straight from the given config, no scaling", () => {
+    const summary = buildRiskTierSummary(balancedConfig, "balanced");
     expect(summary.maxTrade).toBe(100);
-    expect(summary.isActivePolicy).toBe(true);
+    expect(summary.maxDailyLoss).toBe(50);
   });
 
-  it("low and high are transparent scalings, not invented numbers", () => {
-    expect(buildRiskTierSummary(config, "low").maxTrade).toBe(50);
-    expect(buildRiskTierSummary(config, "high").maxTrade).toBe(150);
-    expect(buildRiskTierSummary(config, "low").isActivePolicy).toBe(false);
+  it("a different tier's config produces its own real numbers, not a derived scale", () => {
+    const summary = buildRiskTierSummary(lowConfig, "low");
+    expect(summary.maxTrade).toBe(25);
+    expect(summary.maxDailyLoss).toBe(15);
   });
 });
 
@@ -108,17 +109,45 @@ describe("RiskSelector", () => {
         ok: true,
         status: 200,
         json: async () => ({
-          policy_version: "guard_v1",
-          allowed_symbols: ["BTC-USDT"],
-          allowed_instrument_types: ["SPOT"],
-          max_leverage: 1,
-          allowed_sides: ["buy"],
-          max_simultaneous_positions: 1,
-          max_notional_per_trade_usd: 100,
-          max_daily_loss_usd: 50,
-          max_portfolio_exposure_pct: 20,
-          min_risk_reward: 1.5,
-          min_confidence: 0.6,
+          low: {
+            policy_version: "guard_v1",
+            allowed_symbols: ["BTC-USDT"],
+            allowed_instrument_types: ["SPOT"],
+            max_leverage: 1,
+            allowed_sides: ["buy"],
+            max_simultaneous_positions: 1,
+            max_notional_per_trade_usd: 25,
+            max_daily_loss_usd: 15,
+            max_portfolio_exposure_pct: 10,
+            min_risk_reward: 2.0,
+            min_confidence: 0.75,
+          },
+          balanced: {
+            policy_version: "guard_v1",
+            allowed_symbols: ["BTC-USDT"],
+            allowed_instrument_types: ["SPOT"],
+            max_leverage: 1,
+            allowed_sides: ["buy"],
+            max_simultaneous_positions: 1,
+            max_notional_per_trade_usd: 100,
+            max_daily_loss_usd: 50,
+            max_portfolio_exposure_pct: 20,
+            min_risk_reward: 1.5,
+            min_confidence: 0.6,
+          },
+          high: {
+            policy_version: "guard_v1",
+            allowed_symbols: ["BTC-USDT"],
+            allowed_instrument_types: ["SPOT"],
+            max_leverage: 1,
+            allowed_sides: ["buy"],
+            max_simultaneous_positions: 1,
+            max_notional_per_trade_usd: 250,
+            max_daily_loss_usd: 100,
+            max_portfolio_exposure_pct: 35,
+            min_risk_reward: 1.3,
+            min_confidence: 0.55,
+          },
         }),
       }),
     );
@@ -128,7 +157,7 @@ describe("RiskSelector", () => {
     vi.unstubAllGlobals();
   });
 
-  it("renders real dollar figures from the fetched config, not hardcoded ones", async () => {
+  it("renders real dollar figures from the fetched profile, not hardcoded ones", async () => {
     render(<RiskSelector />);
     await waitFor(() => expect(screen.getByTestId("risk-selector")).toHaveTextContent("$50.00"));
     expect(screen.getByTestId("risk-selector")).toHaveTextContent("Max daily loss");

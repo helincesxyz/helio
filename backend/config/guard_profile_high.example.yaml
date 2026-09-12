@@ -1,0 +1,29 @@
+# Copy to guard_profile_high.yaml (gitignored) and adjust before running Helio.
+# "High" risk preference — larger caps, lower (but still deliberately
+# conservative) confidence/risk-reward bar. Still spot-only, long-only,
+# one-position, BTC-USDT-only — those are hard-invariant fields shared with
+# guard_profile_low.yaml / guard_profile_balanced.yaml, asserted identical
+# at startup by build_app_state().
+
+policy_version: guard_v1
+
+allowed_symbols:
+  - BTC-USDT
+allowed_instrument_types:
+  - SPOT
+max_leverage: 1.0
+allowed_sides:
+  - buy
+max_simultaneous_positions: 1
+
+max_notional_per_trade_usd: 250.0
+max_daily_loss_usd: 100.0
+max_portfolio_exposure_pct: 35.0
+min_risk_reward: 1.3
+min_confidence: 0.55
+
+max_market_data_age_seconds: 900
+max_account_state_age_seconds: 900
+
+lot_size: "0.00000001"
+min_size: "0.00001"

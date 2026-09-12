@@ -76,6 +76,15 @@ export function getGuardConfig(): Promise<GuardConfig> {
   return getJson<GuardConfig>("/guard/config");
 }
 
+export type RiskProfile = "low" | "balanced" | "high";
+
+// The three real, backend-enforced risk-preference profiles — not a
+// client-side scaling preview. Whichever tier a request selects is the
+// exact policy /guard/evaluate applies.
+export function getGuardProfiles(): Promise<Record<RiskProfile, GuardConfig>> {
+  return getJson<Record<RiskProfile, GuardConfig>>("/guard/profiles");
+}
+
 export interface EvidenceItem {
   name: string;
   passed: boolean;

@@ -4,8 +4,6 @@ export type RiskTier = "low" | "balanced" | "high";
 
 const STORAGE_KEY = "helio.riskTier";
 
-const SCALE: Record<RiskTier, number> = { low: 0.5, balanced: 1, high: 1.5 };
-
 export interface RiskTierSummary {
   tier: RiskTier;
   label: string;
@@ -13,8 +11,8 @@ export interface RiskTierSummary {
   maxTrade: number;
   maxDailyLoss: number;
   maxExposurePct: number;
-  isActivePolicy: boolean;
-  note: string;
+  minConfidence: number;
+  minRiskReward: number;
 }
 
 const DESCRIPTIONS: Record<RiskTier, string> = {
@@ -26,27 +24,21 @@ const DESCRIPTIONS: Record<RiskTier, string> = {
 const LABELS: Record<RiskTier, string> = { low: "Low", balanced: "Balanced", high: "High" };
 
 /**
- * Every dollar figure here is derived from Helio's one real, active GATE 3
- * config (fetched via GET /guard/config) — never invented. Low/High are a
- * transparent scaling of those real numbers for preview purposes; only
- * "balanced" (scale 1x) matches what the deterministic risk engine actually
- * enforces today. Selecting Low/High does not change backend enforcement —
- * see docs/ARCHITECTURE.md limitations.
+ * Every number here comes straight from the real, backend-enforced
+ * GuardConfig for this tier (fetched via GET /guard/profiles) — never
+ * scaled or invented. Whichever tier is selected is the exact policy
+ * POST /guard/evaluate applies for this request.
  */
 export function buildRiskTierSummary(config: GuardConfig, tier: RiskTier): RiskTierSummary {
-  const scale = SCALE[tier];
-  const isActivePolicy = tier === "balanced";
   return {
     tier,
     label: LABELS[tier],
     description: DESCRIPTIONS[tier],
-    maxTrade: config.max_notional_per_trade_usd * scale,
-    maxDailyLoss: config.max_daily_loss_usd * scale,
-    maxExposurePct: Math.min(config.max_portfolio_exposure_pct * scale, 100),
-    isActivePolicy,
-    note: isActivePolicy
-      ? "These are Helio's actual active limits."
-      : `Preview only — ${scale}x Helio's active limits. Helio's deterministic risk engine still enforces the Balanced policy today; per-preference enforcement is planned.`,
+    maxTrade: config.max_notional_per_trade_usd,
+    maxDailyLoss: config.max_daily_loss_usd,
+    maxExposurePct: config.max_portfolio_exposure_pct,
+    minConfidence: config.min_confidence,
+    minRiskReward: config.min_risk_reward,
   };
 }
 

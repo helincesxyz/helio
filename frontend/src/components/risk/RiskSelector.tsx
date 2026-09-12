@@ -1,23 +1,24 @@
 import { useEffect, useState } from "react";
-import { getGuardConfig, type GuardConfig } from "../../api/client";
+import { getGuardProfiles, type GuardConfig, type RiskProfile } from "../../api/client";
 import { buildRiskTierSummary, getStoredRiskTier, setStoredRiskTier, type RiskTier } from "../../lib/riskProfiles";
 import { formatUsd } from "../../lib/format";
 
 const TIERS: RiskTier[] = ["low", "balanced", "high"];
 
-export function RiskSelector({ compact }: { compact?: boolean }) {
-  const [config, setConfig] = useState<GuardConfig | null>(null);
+export function RiskSelector({ compact, onChange }: { compact?: boolean; onChange?: (tier: RiskTier) => void }) {
+  const [profiles, setProfiles] = useState<Record<RiskProfile, GuardConfig> | null>(null);
   const [tier, setTier] = useState<RiskTier>(getStoredRiskTier());
 
   useEffect(() => {
-    getGuardConfig()
-      .then(setConfig)
+    getGuardProfiles()
+      .then(setProfiles)
       .catch(() => {});
   }, []);
 
   const select = (t: RiskTier) => {
     setTier(t);
     setStoredRiskTier(t);
+    onChange?.(t);
   };
 
   return (
@@ -38,18 +39,20 @@ export function RiskSelector({ compact }: { compact?: boolean }) {
         ))}
       </div>
 
-      {config && !compact && (
+      {profiles && !compact && (
         <div className="mt-3 text-center">
           {(() => {
-            const summary = buildRiskTierSummary(config, tier);
+            const summary = buildRiskTierSummary(profiles[tier], tier);
             return (
               <>
                 <p className="text-xs text-ink-muted">{summary.description}</p>
                 <p className="mt-2 text-xs text-ink-faint">
                   Max trade {formatUsd(summary.maxTrade)} · Max daily loss {formatUsd(summary.maxDailyLoss)} · Max
-                  positions {config.max_simultaneous_positions}
+                  positions {profiles[tier].max_simultaneous_positions}
                 </p>
-                <p className="mx-auto mt-1 max-w-md text-[11px] text-ink-faint">{summary.note}</p>
+                <p className="mx-auto mt-1 max-w-md text-[11px] text-ink-faint">
+                  This is the real limit Helio's risk engine enforces for every trade you send at this setting.
+                </p>
               </>
             );
           })()}

@@ -38,6 +38,7 @@ class GuardTradeIntent(BaseModel):
     thesis_id: str
     confidence: float = Field(ge=0.0, le=1.0)
     timestamp: datetime = Field(default_factory=_now)
+    risk_profile: Literal["low", "balanced", "high"] = "balanced"
 
 
 class GuardCheck(BaseModel):

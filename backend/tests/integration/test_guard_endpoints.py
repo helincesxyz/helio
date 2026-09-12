@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 
 from helio.config import HelioSettings
 from helio.guard.config import load_guard_config
-from helio.guard.engine import GuardEngine
 from helio.guard.store import GuardStore
 from helio.learning.store import EventStore
 from helio.risk.config_loader import load_risk_config
@@ -29,7 +28,7 @@ def client(tmp_path: Path) -> TestClient:
         risk_engine=RiskEngine(risk_config),
         event_store=EventStore(db_path),
         thesis_store=ThesisStore(db_path),
-        guard_engine=GuardEngine(guard_config),
+        guard_profiles={"low": guard_config, "balanced": guard_config, "high": guard_config},
         guard_store=GuardStore(db_path),
     )
     reset_app_state_for_tests(state)
@@ -129,6 +128,30 @@ def test_get_config_returns_active_policy(client: TestClient):
     assert body["allowed_symbols"] == ["BTC-USDT"]
     assert body["max_notional_per_trade_usd"] == 100.0
     assert body["policy_version"] == "guard_v1_test"
+
+
+def test_get_profiles_returns_all_three(client: TestClient):
+    resp = client.get("/guard/profiles")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert set(body.keys()) == {"low", "balanced", "high"}
+    assert body["balanced"]["max_notional_per_trade_usd"] == 100.0
+
+
+def test_evaluate_with_unknown_risk_profile_is_422(client: TestClient):
+    thesis_id, prepared = _log_thesis(client, action="BUY", confidence=0.75)
+    intent = _guard_intent_payload(thesis_id, prepared, confidence=0.75, risk_profile="extreme")
+    resp = client.post("/guard/evaluate", json={"intent": intent, "account": _account_payload()})
+    assert resp.status_code == 422
+
+
+def test_evaluate_defaults_to_balanced_profile(client: TestClient):
+    thesis_id, prepared = _log_thesis(client, action="BUY", confidence=0.75)
+    intent = _guard_intent_payload(thesis_id, prepared, confidence=0.75)
+    assert "risk_profile" not in intent
+    resp = client.post("/guard/evaluate", json={"intent": intent, "account": _account_payload()})
+    assert resp.status_code == 200
+    assert resp.json()["decision"] == "APPROVE"
 
 
 def test_evaluate_approves_valid_intent(client: TestClient):

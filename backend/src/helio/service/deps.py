@@ -4,11 +4,12 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 from helio.config import HelioSettings, get_settings
+from helio.conversation.store import ConversationStore
 from helio.learning.store import EventStore
 from helio.logging_utils import configure_logging
 from helio.risk.config_loader import load_risk_config
 from helio.risk.engine import RiskEngine
-from helio.guard.config import GuardConfig, load_guard_config
+from helio.guard.config import GuardConfig, load_guard_profiles
 from helio.guard.engine import GuardEngine
 from helio.guard.store import GuardStore
 from helio.schemas.account import AccountState
@@ -35,8 +36,19 @@ class AppState:
     verify_rows: dict[str, VerifyRow] = field(default_factory=dict)
     latest_thesis_state: dict[str, PreparedMarketState] = field(default_factory=dict)
     thesis_store: ThesisStore | None = None
-    guard_engine: GuardEngine | None = None
+    # Immutable, loaded once at startup — never mutated per-request. A
+    # fresh, stateless GuardEngine is constructed per call via
+    # get_guard_engine(), so "per-request risk profile" never means shared
+    # mutable state.
+    guard_profiles: dict[str, GuardConfig] = field(default_factory=dict)
     guard_store: GuardStore | None = None
+    conversation_store: ConversationStore | None = None
+
+    def get_guard_engine(self, profile: str) -> GuardEngine:
+        config = self.guard_profiles.get(profile)
+        if config is None:
+            raise KeyError(f"unknown risk profile {profile!r}")
+        return GuardEngine(config)
 
 
 _state: AppState | None = None
@@ -46,14 +58,15 @@ def build_app_state() -> AppState:
     settings = get_settings()
     configure_logging(settings.log_level)
     risk_config = load_risk_config(settings.risk_config_path)
-    guard_config = load_guard_config(settings.guard_config_path)
+    guard_profiles = load_guard_profiles(settings.guard_config_path.parent)
     return AppState(
         settings=settings,
         risk_engine=RiskEngine(risk_config),
         event_store=EventStore(settings.db_path),
         thesis_store=ThesisStore(settings.db_path),
-        guard_engine=GuardEngine(guard_config),
+        guard_profiles=guard_profiles,
         guard_store=GuardStore(settings.db_path),
+        conversation_store=ConversationStore(settings.db_path),
     )
 
 
