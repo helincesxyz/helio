@@ -12,6 +12,18 @@ async function getJson<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(`POST ${path} failed: ${res.status}`);
+  }
+  return res.json() as Promise<T>;
+}
+
 // 404 means "nothing logged yet" for these — a normal, expected state,
 // not an error to surface to the user.
 async function getOptionalJson<T>(path: string): Promise<T | null> {
@@ -195,4 +207,86 @@ export interface MarketSnapshot {
 
 export function getMarketState(instId = "BTC-USDT"): Promise<MarketSnapshot | null> {
   return getOptionalJson<MarketSnapshot>(`/state/market?instId=${instId}`);
+}
+
+// --- Conversation bridge (Claude Code fulfills these live — see
+// docs/runbooks/conversation_fulfillment.md) ---
+
+export type ConversationIntent = "GET_INTO_BTC" | "OPTIMIZE_MONEY" | "OPTIMIZE_APY" | "UNKNOWN";
+export type ConversationStatus = "PENDING" | "ANSWERED" | "FAILED";
+export type ConversationResponseKind = "thesis" | "allocation_comparison" | "apy_comparison" | "unavailable" | "error";
+
+export interface ConversationResponsePayload {
+  kind: ConversationResponseKind;
+  thesis_id: string | null;
+  comparison: Record<string, unknown> | null;
+  message: string | null;
+  answered_at: string;
+}
+
+export interface ConversationRequestRecord {
+  request_id: string;
+  conversation_id: string;
+  message: string;
+  intent: ConversationIntent;
+  risk_profile: RiskProfile;
+  status: ConversationStatus;
+  created_at: string;
+  response: ConversationResponsePayload | null;
+}
+
+export function postConversationRequest(
+  message: string,
+  riskProfile: RiskProfile,
+  conversationId?: string,
+): Promise<ConversationRequestRecord> {
+  return postJson<ConversationRequestRecord>("/conversation/requests", {
+    message,
+    risk_profile: riskProfile,
+    conversation_id: conversationId,
+  });
+}
+
+export function getConversationRequest(requestId: string): Promise<ConversationRequestRecord> {
+  return getJson<ConversationRequestRecord>(`/conversation/requests/${requestId}`);
+}
+
+// --- Gate 4 execution lifecycle (read-only from the frontend — nothing
+// here ever triggers a submission; see docs/EXECUTION_PROTOCOL.md) ---
+
+export type ExecutionMode = "readonly" | "simulation" | "live";
+export type ExecutionStatus = "SUBMITTED" | "LIVE" | "PARTIALLY_FILLED" | "FILLED" | "REJECTED" | "UNKNOWN";
+export type ExecutionOrigin = "execution_test" | "autonomous_strategy";
+
+export interface ExecutionLifecycle {
+  execution_id: string;
+  trade_intent_id: string;
+  thesis_id: string;
+  risk_evaluation_id: string;
+  intent_hash: string;
+  origin: ExecutionOrigin;
+  mode: ExecutionMode | null;
+  status: ExecutionStatus | null;
+  okx_order_id: string | null;
+  requested_quantity: string;
+  filled_quantity: string | null;
+  avg_fill_price: string | null;
+  fee: string | null;
+  expires_at: string;
+  consumed: boolean;
+  authorized_at: string;
+  prepared_at: string | null;
+  submitted_at: string | null;
+  verified_at: string | null;
+  account_state_before: AccountState | null;
+  account_state_after: AccountState | null;
+}
+
+export function getExecutions(thesisId?: string, limit = 50): Promise<ExecutionLifecycle[]> {
+  const params = thesisId ? `thesis_id=${thesisId}` : `limit=${limit}`;
+  return getJson<ExecutionLifecycle[]>(`/execution?${params}`);
+}
+
+export function getExecution(executionId: string): Promise<ExecutionLifecycle | null> {
+  return getOptionalJson<ExecutionLifecycle>(`/execution/${executionId}`);
 }

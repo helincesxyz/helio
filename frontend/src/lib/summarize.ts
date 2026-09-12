@@ -36,3 +36,36 @@ export function summarizePlainEnglish(record: ThesisRecord): string {
   }
   return "I'm waiting for a clearer signal before putting your money to work.";
 }
+
+/**
+ * A deeper, deterministic explanation of the same already-loaded
+ * ThesisRecord — what a "Why?" follow-up answers. Entirely client-side:
+ * it never calls the conversation bridge, since everything it says is
+ * already sitting in `record`. Lists every hard-gate evidence check by
+ * name so the answer traces exactly to GATE 2's real evidence checklist,
+ * never a paraphrase invented on the spot.
+ */
+export function explainWhy(record: ThesisRecord): string {
+  const { thesis, prepared_state } = record;
+  const hardGates = prepared_state.evidence.filter((e) => e.hard_gate);
+  const passed = hardGates.filter((e) => e.passed);
+  const failed = hardGates.filter((e) => !e.passed);
+
+  const lines: string[] = [];
+  lines.push(
+    thesis.action === "BUY"
+      ? `Every required check passed (${passed.length}/${hardGates.length}), so I'm ready to act:`
+      : `${failed.length} of ${hardGates.length} required checks didn't pass, so I'm waiting:`,
+  );
+
+  for (const item of hardGates) {
+    lines.push(`${item.passed ? "✓" : "✗"} ${item.detail || item.name}`);
+  }
+
+  lines.push(`Regime: ${prepared_state.regime_reason || prepared_state.regime}.`);
+  return lines.join("\n");
+}
+
+export function isWhyFollowUp(text: string): boolean {
+  return text.trim().toLowerCase().replace(/[?.!]/g, "") === "why";
+}

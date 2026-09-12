@@ -1,18 +1,71 @@
+import { useEffect, useState } from "react";
+import { getExecutions, type ExecutionLifecycle } from "../../api/client";
 import { EmptyState } from "../../components/common/EmptyState";
+import { formatRelativeTime } from "../../lib/format";
 
-const COLUMNS = ["Date", "Asset", "Side", "Entry", "Exit", "Result", "Return", "P&L", "Fees"];
+const COLUMNS = ["Date", "Origin", "Side", "Quantity", "Status", "Order ID", "Mode"];
 
 export function Trades() {
+  const [executions, setExecutions] = useState<ExecutionLifecycle[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getExecutions()
+      .then((rows) => {
+        if (!cancelled) setExecutions(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setExecutions([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-9 gap-4 border-b border-border pb-3 opacity-30">
+      <div className="grid grid-cols-7 gap-4 border-b border-border pb-3 opacity-60">
         {COLUMNS.map((col) => (
           <p key={col} className="text-xs uppercase tracking-wide text-ink-muted">
             {col}
           </p>
         ))}
       </div>
-      <EmptyState title="No live trades yet." />
+
+      {executions === null ? (
+        <p className="text-sm text-ink-muted">Loading...</p>
+      ) : executions.length === 0 ? (
+        <EmptyState
+          title="No live trades yet."
+          description="Every execution here traces to a real Gate 3 APPROVE — nothing is fabricated. Trades are labeled honestly: an Execution test (this milestone's manual Gate 4 flow) is not the same as an Autonomous strategy (not built yet)."
+        />
+      ) : (
+        <div className="flex flex-col gap-2">
+          {executions.map((exec) => (
+            <div key={exec.execution_id} className="grid grid-cols-7 items-center gap-4 rounded-xl border border-border bg-bg-glass px-4 py-3 text-sm">
+              <p className="text-ink-muted">{formatRelativeTime(exec.authorized_at)}</p>
+              <p>
+                <span
+                  className={`rounded-full border px-2 py-0.5 text-xs ${
+                    exec.origin === "execution_test"
+                      ? "border-border text-ink-muted"
+                      : "border-accent text-accent-strong"
+                  }`}
+                >
+                  {exec.origin === "execution_test" ? "Execution test" : "Autonomous strategy"}
+                </span>
+              </p>
+              <p className="text-ink">{exec.trade_intent_id.slice(0, 8)}</p>
+              <p className="text-ink-muted">{exec.filled_quantity ?? exec.requested_quantity}</p>
+              <p className={exec.status === "FILLED" ? "text-positive" : exec.status === "REJECTED" ? "text-negative" : "text-ink-muted"}>
+                {exec.status ?? "AUTHORIZED"}
+              </p>
+              <p className="text-ink-faint">{exec.okx_order_id ?? "—"}</p>
+              <p className="text-ink-faint">{exec.mode ?? "—"}</p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

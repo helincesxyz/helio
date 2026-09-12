@@ -78,6 +78,10 @@ class ExecutionPreparation(BaseModel):
     side: Literal["buy", "sell"]
     ordType: str
     sz: str
+    # GuardTradeIntent.requested_quantity is always base-currency (BTC) —
+    # explicit here because OKX's market-buy default is quote-currency
+    # sizing, which would silently misinterpret `sz` otherwise.
+    tgtCcy: Literal["base_ccy"] = "base_ccy"
     simulatedTrading: bool
     prepared_at: datetime = Field(default_factory=_now)
 

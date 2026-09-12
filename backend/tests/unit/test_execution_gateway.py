@@ -85,6 +85,7 @@ class TestPrepare:
         assert prep.side == intent.side
         assert prep.sz == intent.requested_quantity
         assert prep.simulatedTrading is True
+        assert prep.tgtCcy == "base_ccy"  # sz is BTC quantity, never quote-currency
 
     def test_prepare_unknown_execution_id_raises_not_found(self, gateway):
         with pytest.raises(NotFoundError):

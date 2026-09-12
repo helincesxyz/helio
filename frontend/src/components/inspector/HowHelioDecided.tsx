@@ -1,4 +1,5 @@
-import type { GuardRecord, ThesisRecord } from "../../api/client";
+import { useEffect, useState } from "react";
+import { getExecutions, type ExecutionLifecycle, type GuardRecord, type ThesisRecord } from "../../api/client";
 import { useHelioData } from "../../context/HelioDataContext";
 import { formatRelativeTime, formatUsd, titleCase } from "../../lib/format";
 
@@ -19,6 +20,52 @@ interface Step {
 export function HowHelioDecided({ record, guardRecord }: { record: ThesisRecord; guardRecord: GuardRecord | null }) {
   const { account } = useHelioData();
   const { thesis, prepared_state } = record;
+  const [execution, setExecution] = useState<ExecutionLifecycle | null | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    setExecution(undefined);
+    getExecutions(record.decision_id)
+      .then((rows) => {
+        if (!cancelled) setExecution(rows[0] ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setExecution(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [record.decision_id]);
+
+  const executionStep: Step =
+    execution === undefined
+      ? { n: "06", title: "Execution", lines: ["Checking..."], source: "GATE 4 — ACT" }
+      : execution === null
+        ? { n: "06", title: "Execution", lines: ["No execution attempted"], source: "GATE 4 — ACT", disabled: true }
+        : {
+            n: "06",
+            title: "Execution",
+            lines: [
+              `${execution.status ?? "AUTHORIZED"} (${execution.mode ?? "not yet prepared"})`,
+              execution.origin === "execution_test" ? "Execution test" : "Autonomous strategy",
+            ],
+            source: "GATE 4 — ACT",
+          };
+
+  const verificationStep: Step =
+    execution === undefined
+      ? { n: "07", title: "Verification", lines: ["Checking..."], source: "GATE 4 — ACT" }
+      : execution?.verified_at
+        ? {
+            n: "07",
+            title: "Verification",
+            lines: [
+              execution.okx_order_id ? `Order ${execution.okx_order_id}` : "No order id",
+              execution.filled_quantity ? `Filled ${execution.filled_quantity}` : "Not filled",
+            ],
+            source: "GATE 4 — ACT",
+          }
+        : { n: "07", title: "Verification", lines: ["Not verified yet"], source: "GATE 4 — ACT", disabled: true };
 
   const steps: Step[] = [
     {
@@ -56,20 +103,8 @@ export function HowHelioDecided({ record, guardRecord }: { record: ThesisRecord;
         : ["No execution proposed", "Deterministic guard — not engaged"],
       source: "GATE 3 — PROTECT",
     },
-    {
-      n: "06",
-      title: "Execution",
-      lines: ["Not available"],
-      source: "Gate 4 not implemented yet",
-      disabled: true,
-    },
-    {
-      n: "07",
-      title: "Verification",
-      lines: ["Not available"],
-      source: "Gate 4 not implemented yet",
-      disabled: true,
-    },
+    executionStep,
+    verificationStep,
   ];
 
   return (

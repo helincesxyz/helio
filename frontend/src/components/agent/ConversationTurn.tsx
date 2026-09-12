@@ -1,11 +1,19 @@
 import type { ThesisRecord } from "../../api/client";
 import { formatRelativeTime } from "../../lib/format";
 import { PlainEnglishAnswer } from "./PlainEnglishAnswer";
+import { AllocationComparison } from "./AllocationComparison";
+import { ApyComparison } from "./ApyComparison";
+import { ReasoningChecklist } from "./ReasoningChecklist";
 
 export type ConversationTurnData =
   | { kind: "user"; id: string; text: string; timestamp: string }
   | { kind: "helio"; id: string; record: ThesisRecord; grounded: boolean; banner?: string }
-  | { kind: "unavailable"; id: string; message: string };
+  | { kind: "why"; id: string; text: string; timestamp: string }
+  | { kind: "allocation_comparison"; id: string; comparison: Record<string, unknown>; timestamp: string }
+  | { kind: "apy_comparison"; id: string; comparison: Record<string, unknown>; timestamp: string }
+  | { kind: "pending"; id: string }
+  | { kind: "unavailable"; id: string; message: string }
+  | { kind: "error"; id: string; message: string };
 
 function HelioIdentity({ caption }: { caption: string }) {
   return (
@@ -30,11 +38,56 @@ export function ConversationTurn({ turn }: { turn: ConversationTurnData }) {
     );
   }
 
+  if (turn.kind === "pending") {
+    return (
+      <div className="max-w-2xl">
+        <HelioIdentity caption="Fetching fresh data and reasoning..." />
+        <ReasoningChecklist regime="pending" />
+      </div>
+    );
+  }
+
   if (turn.kind === "unavailable") {
     return (
       <div className="max-w-2xl">
         <HelioIdentity caption="Not connected yet" />
         <p className="text-base leading-relaxed text-ink">{turn.message}</p>
+      </div>
+    );
+  }
+
+  if (turn.kind === "error") {
+    return (
+      <div className="max-w-2xl">
+        <HelioIdentity caption="Something went wrong" />
+        <p className="text-base leading-relaxed text-negative">{turn.message}</p>
+      </div>
+    );
+  }
+
+  if (turn.kind === "why") {
+    return (
+      <div className="max-w-2xl">
+        <HelioIdentity caption="Same analysis, more detail" />
+        <p className="whitespace-pre-line text-sm leading-relaxed text-ink-muted">{turn.text}</p>
+      </div>
+    );
+  }
+
+  if (turn.kind === "allocation_comparison") {
+    return (
+      <div className="max-w-2xl">
+        <HelioIdentity caption={`Based on live OKX data · ${formatRelativeTime(turn.timestamp)}`} />
+        <AllocationComparison comparison={turn.comparison} />
+      </div>
+    );
+  }
+
+  if (turn.kind === "apy_comparison") {
+    return (
+      <div className="max-w-2xl">
+        <HelioIdentity caption={`Based on live OKX Earn data · ${formatRelativeTime(turn.timestamp)}`} />
+        <ApyComparison comparison={turn.comparison} />
       </div>
     );
   }
