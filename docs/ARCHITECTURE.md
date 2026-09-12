@@ -71,9 +71,19 @@ JSON that Claude Code already received back from an MCP tool call.
 - **`backend/src/helio/service/`** — the FastAPI app Claude Code and the
   dashboard talk to. Binds `127.0.0.1` only.
 - **`frontend/`** — a React dashboard reading only from Helio's own API.
-- **[AGENT_PROTOCOL.md](AGENT_PROTOCOL.md)** — the actual contract for how
-  Claude Code sequences MCP calls and Helio API calls. As load-bearing as
-  any code file here.
+- **`backend/src/helio/thesis/`** (GATE 2: THINK) — deterministic technical
+  indicators (EMA/ATR/volume/swing/price-change/volatility), a 4H regime
+  classifier (BULL_TREND/BEAR_TREND/RANGE/HIGH_VOLATILITY_UNCLEAR), and the
+  `trend_breakout` v1 evidence checklist. Claude Code hands over raw candles
+  via `POST /thesis/prepare`; Helio computes everything and hands back a
+  `PreparedMarketState`; the LLM writes the qualitative thesis and echoes
+  the numbers verbatim via `POST /thesis/submit`, which `thesis/decision_quality.py`
+  validates (contradiction/hallucination checks) before logging to a
+  dedicated `ThesisStore`. Same credential-blind, LLM-blind pattern as the
+  rest of Helio — see [THESIS_PROTOCOL.md](THESIS_PROTOCOL.md).
+- **[AGENT_PROTOCOL.md](AGENT_PROTOCOL.md)** / **[THESIS_PROTOCOL.md](THESIS_PROTOCOL.md)**
+  — the actual contracts for how Claude Code sequences MCP calls and Helio
+  API calls. As load-bearing as any code file here.
 
 ## Limitations
 
@@ -85,3 +95,7 @@ JSON that Claude Code already received back from an MCP tool call.
 - The learning engine only logs and retrieves history in v1; it does not
   yet adapt strategy parameters (see `learning/adjuster.py`).
 - Single-strategy, single-exchange (OKX) scope for this initial pass.
+- GATE 2's `trend_breakout` strategy only produces a reasoning thesis
+  (BUY/WAIT + evidence) — it does not place orders. That wiring is
+  deliberately out of scope until a later gate, and execution-tool access
+  is intentionally not given to the agent for this pass.

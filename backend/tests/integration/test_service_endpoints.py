@@ -11,6 +11,7 @@ from helio.risk.config_loader import load_risk_config
 from helio.risk.engine import RiskEngine
 from helio.service.app import app
 from helio.service.deps import AppState, reset_app_state_for_tests
+from helio.thesis.store import ThesisStore
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 
@@ -22,6 +23,7 @@ def client(tmp_path: Path) -> TestClient:
         settings=HelioSettings(mode="simulation"),
         risk_engine=RiskEngine(risk_config),
         event_store=EventStore(tmp_path / "events.sqlite3"),
+        thesis_store=ThesisStore(tmp_path / "events.sqlite3"),
     )
     reset_app_state_for_tests(state)
     return TestClient(app)

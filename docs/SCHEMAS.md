@@ -64,3 +64,40 @@ The unit stored by the learning engine: `intent`, `decision`,
 
 See `backend/config/risk_config.example.yaml` — `allow_live` is the hard
 live-trading gate; everything else is a numeric or list-based limit.
+
+## GATE 2 (THINK) schemas — `backend/src/helio/schemas/thesis.py`
+
+**TimeframeIndicators**: `timeframe` (`4H|1H|15m`), `as_of`, `candle_count`,
+`price`, `ema20/50/200`, `atr`, `atr_pct`, `volume`, `volume_avg`,
+`volume_ratio`, `swing_high`, `swing_low`, `price_change_pct` — all
+decimal-as-string except `candle_count`. Computed by
+`thesis/indicators.py::compute_indicators()`, never by an LLM.
+
+**PreparedMarketState**: what `POST /thesis/prepare` returns —
+`symbol`, `prepared_at`, `tf_4h/tf_1h/tf_15m: TimeframeIndicators`,
+`regime` (`BULL_TREND|BEAR_TREND|RANGE|HIGH_VOLATILITY_UNCLEAR`),
+`regime_reason`, `evidence: EvidenceItem[]` (`name, passed, detail,
+hard_gate`), `candidate_action` (Helio's own reference BUY/WAIT — never the
+final answer), `strategy="trend_breakout"`, `strategy_version="v1"`.
+
+**Thesis**: assembled by the LLM and POSTed to `/thesis/submit` —
+`decision_id`, `symbol`, `timestamp`, `regime`, `strategy`,
+`strategy_version`, `action` (`BUY|WAIT`), `confidence` (float, `[0,1]`),
+`thesis` (prose), `evidence: string[]` (prose bullets, distinct from
+`PreparedMarketState.evidence`'s structured booleans), `invalidation?
+{condition, price?}`, `target? {price?}`, `risk_reward?`, `market_state:
+ThesisMarketStateEcho` — numbers the LLM must copy verbatim from the
+`PreparedMarketState` it was given (`price, ema20_4h, ema50_4h, ema200_4h,
+atr_1h, volume_ratio, swing_high_1h, swing_low_1h`).
+
+**ThesisValidationResult**: `valid, errors[], warnings[]` — returned
+alongside the thesis from `/thesis/submit`. See
+`thesis/decision_quality.py` for the exact rules (regime contradiction,
+unsupported-by-evidence BUY, missing invalidation, numeric hallucination
+cross-check within a documented tolerance).
+
+**CandleBundle**: input to `/thesis/prepare` — `symbol`,
+`tf_4h/tf_1h/tf_15m: Candle[]` (reuses `schemas.market.Candle`).
+
+**ThesisRecord**: what `/thesis/latest` and `/thesis/history` return —
+`decision_id, logged_at, thesis, prepared_state, validation`.

@@ -10,6 +10,8 @@ from helio.risk.config_loader import load_risk_config
 from helio.risk.engine import RiskEngine
 from helio.schemas.account import AccountState
 from helio.schemas.market import MarketSnapshot
+from helio.schemas.thesis import PreparedMarketState
+from helio.thesis.store import ThesisStore
 
 
 @dataclass
@@ -28,6 +30,8 @@ class AppState:
     latest_account: AccountState | None = None
     latest_market: dict[str, MarketSnapshot] = field(default_factory=dict)
     verify_rows: dict[str, VerifyRow] = field(default_factory=dict)
+    latest_thesis_state: dict[str, PreparedMarketState] = field(default_factory=dict)
+    thesis_store: ThesisStore | None = None
 
 
 _state: AppState | None = None
@@ -41,6 +45,7 @@ def build_app_state() -> AppState:
         settings=settings,
         risk_engine=RiskEngine(risk_config),
         event_store=EventStore(settings.db_path),
+        thesis_store=ThesisStore(settings.db_path),
     )
 
 
