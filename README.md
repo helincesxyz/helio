@@ -146,7 +146,11 @@ source backend/.venv/bin/activate && python -m helio.cli.main verify   # local c
 For the full 8-row checklist (including the OKX/MCP-sourced rows), see
 [docs/VERIFICATION_PROTOCOL.md](docs/VERIFICATION_PROTOCOL.md) and run
 [docs/runbooks/verify.md](docs/runbooks/verify.md) with Claude Code, then
-check `curl http://127.0.0.1:8787/verify` or the dashboard.
+check `curl http://127.0.0.1:8787/verify`, the dashboard, or:
+
+```bash
+python3 scripts/health_check.py   # standard-library only; needs `serve` running
+```
 
 ## Enable live trading
 

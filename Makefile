@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-.PHONY: install test verify serve frontend-install frontend-build frontend-test dev
+.PHONY: install test verify serve health-check frontend-install frontend-build frontend-test dev
 
 # NOTE: verify/serve/risk-check are run from the repo root (not backend/) —
 # config and dist paths in helio.config / risk.checks are repo-root-relative.
@@ -15,6 +15,9 @@ verify:
 
 serve:
 	source backend/.venv/bin/activate && python -m helio.cli.main serve
+
+health-check:
+	python3 scripts/health_check.py
 
 frontend-install:
 	cd frontend && npm install
