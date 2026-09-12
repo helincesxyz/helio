@@ -69,6 +69,15 @@ class GuardStore:
         records = self.get_by_symbol(symbol, limit=1)
         return records[0] if records else None
 
+    def get_by_trade_intent_id(self, trade_intent_id: str) -> GuardRecord | None:
+        with closing(self._connect()) as conn:
+            row = conn.execute(
+                "SELECT trade_intent_id, trade_intent_json, decision_json, logged_at "
+                "FROM guard_events WHERE trade_intent_id = ?",
+                (trade_intent_id,),
+            ).fetchone()
+        return self._row_to_record(row) if row else None
+
     def get_by_thesis_id(self, thesis_id: str) -> GuardRecord | None:
         with closing(self._connect()) as conn:
             row = conn.execute(

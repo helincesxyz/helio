@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 
 from helio.config import HelioSettings, get_settings
 from helio.conversation.store import ConversationStore
+from helio.execution.gateway import ExecutionGateway
+from helio.execution.store import ExecutionStore
 from helio.learning.store import EventStore
 from helio.logging_utils import configure_logging
 from helio.risk.config_loader import load_risk_config
@@ -43,6 +45,7 @@ class AppState:
     guard_profiles: dict[str, GuardConfig] = field(default_factory=dict)
     guard_store: GuardStore | None = None
     conversation_store: ConversationStore | None = None
+    execution_gateway: ExecutionGateway | None = None
 
     def get_guard_engine(self, profile: str) -> GuardEngine:
         config = self.guard_profiles.get(profile)
@@ -59,14 +62,16 @@ def build_app_state() -> AppState:
     configure_logging(settings.log_level)
     risk_config = load_risk_config(settings.risk_config_path)
     guard_profiles = load_guard_profiles(settings.guard_config_path.parent)
+    guard_store = GuardStore(settings.db_path)
     return AppState(
         settings=settings,
         risk_engine=RiskEngine(risk_config),
         event_store=EventStore(settings.db_path),
         thesis_store=ThesisStore(settings.db_path),
         guard_profiles=guard_profiles,
-        guard_store=GuardStore(settings.db_path),
+        guard_store=guard_store,
         conversation_store=ConversationStore(settings.db_path),
+        execution_gateway=ExecutionGateway(ExecutionStore(settings.db_path), guard_store),
     )
 
 

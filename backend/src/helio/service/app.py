@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from helio.service.routers import conversation, guard, learning, risk, state, status, strategy, thesis, verify
+from helio.service.routers import conversation, execution, guard, learning, risk, state, status, strategy, thesis, verify
 
 
 def create_app() -> FastAPI:
@@ -34,6 +34,7 @@ def create_app() -> FastAPI:
     app.include_router(thesis.router)
     app.include_router(guard.router)
     app.include_router(conversation.router)
+    app.include_router(execution.router)
 
     return app
 

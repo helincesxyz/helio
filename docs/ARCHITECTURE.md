@@ -97,8 +97,15 @@ JSON that Claude Code already received back from an MCP tool call.
   so an unexpected exception becomes a FAIL rather than an uncaught
   approval. Every evaluation — approved or rejected — is logged to a
   dedicated `GuardStore`. See [GUARD_PROTOCOL.md](GUARD_PROTOCOL.md).
+- **`backend/src/helio/execution/`** (GATE 4: ACT) — the deterministic
+  execution gateway between an `APPROVE`d `GuardDecision` and an actual
+  OKX order: exact-intent-bound, single-use, short-lived authorizations
+  (`ExecutionAuthorization`), a non-overridable kill switch for live
+  submission, and an idempotent `ExecutionStore`/`ExecutionLifecycle` audit
+  trail. See [EXECUTION_PROTOCOL.md](EXECUTION_PROTOCOL.md).
 - **[AGENT_PROTOCOL.md](AGENT_PROTOCOL.md)** / **[THESIS_PROTOCOL.md](THESIS_PROTOCOL.md)**
-  / **[GUARD_PROTOCOL.md](GUARD_PROTOCOL.md)** — the actual contracts for
+  / **[GUARD_PROTOCOL.md](GUARD_PROTOCOL.md)** / **[EXECUTION_PROTOCOL.md](EXECUTION_PROTOCOL.md)**
+  — the actual contracts for
   how Claude Code sequences MCP calls and Helio API calls. As load-bearing
   as any code file here.
 
@@ -116,10 +123,15 @@ JSON that Claude Code already received back from an MCP tool call.
   (BUY/WAIT + evidence) — it does not place orders. That wiring is
   deliberately out of scope until a later gate, and execution-tool access
   is intentionally not given to the agent for this pass.
-- GATE 3's `GuardEngine` can only APPROVE or REJECT a trade intent — an
-  APPROVE does not (yet) cause anything to execute. Wiring an approved
-  intent to an actual OKX order-placement MCP call is explicitly deferred
-  to a later gate, under its own opt-in configuration.
+- GATE 4 (`backend/src/helio/execution/`, see
+  [EXECUTION_PROTOCOL.md](EXECUTION_PROTOCOL.md)) wires an `APPROVE`d
+  GuardDecision to a real, exactly-bound OKX order-placement call, and is
+  fully exercised in **simulation**. It is deliberately never wired to
+  submit a real (`simulatedTrading: false`) order autonomously: the kill
+  switch (`HELIO_LIVE_EXECUTION_ENABLED`) gates `mode="live"` preparation,
+  and even with it on, Claude Code never calls the live order-placement
+  tool itself — `/execution/prepare` only ever hands back the exact
+  parameters for the account owner to submit themselves.
 - GATE 3's risk policy is a single, conservative starting point (BTC-USDT
   spot, long-only, one position, small notional/exposure caps). It is not
   tuned or backtested — the numeric thresholds are documented, sane

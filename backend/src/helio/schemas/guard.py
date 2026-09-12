@@ -61,6 +61,7 @@ class GuardRiskSummary(BaseModel):
 class GuardDecision(BaseModel):
     model_config = {"extra": "forbid"}
 
+    decision_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     decision: Literal["APPROVE", "REJECT"]
     trade_intent_id: str
     checks: list[GuardCheck]
