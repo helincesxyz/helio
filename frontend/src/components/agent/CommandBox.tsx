@@ -4,10 +4,14 @@ export function CommandBox({
   onSubmit,
   placeholder = "Ask Helio about the market or give it a trading objective...",
   autoFocus,
+  variant = "technical",
 }: {
   onSubmit: (text: string) => void;
   placeholder?: string;
   autoFocus?: boolean;
+  /** "consumer" hides strategy-specific footer pills (symbol/mode/strategy) —
+   * a first-time user shouldn't need to know what any of those mean. */
+  variant?: "consumer" | "technical";
 }) {
   const [value, setValue] = useState("");
 
@@ -42,11 +46,15 @@ export function CommandBox({
       />
       <div className="mt-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="rounded-full border border-border px-3 py-1 text-xs text-ink-muted">BTC-USDT</span>
-          <span className="rounded-full border border-border px-3 py-1 text-xs text-ink-muted">Simulation</span>
+          {variant === "technical" && (
+            <>
+              <span className="rounded-full border border-border px-3 py-1 text-xs text-ink-muted">BTC-USDT</span>
+              <span className="rounded-full border border-border px-3 py-1 text-xs text-ink-muted">Simulation</span>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-ink-faint">Trend Breakout v1</span>
+          {variant === "technical" && <span className="text-xs text-ink-faint">Trend Breakout v1</span>}
           <button
             type="submit"
             aria-label="Send"

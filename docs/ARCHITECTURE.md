@@ -124,3 +124,12 @@ JSON that Claude Code already received back from an MCP tool call.
   spot, long-only, one position, small notional/exposure caps). It is not
   tuned or backtested — the numeric thresholds are documented, sane
   defaults meant to be adjusted via `backend/config/guard_config.yaml`.
+- The frontend's consumer-facing Low/Balanced/High risk selector
+  (`frontend/src/lib/riskProfiles.ts`) is a **client-side preview only**: it
+  scales the one real active `GuardConfig` (fetched via `GET /guard/config`)
+  by a documented factor for display purposes. It does not change what
+  `GuardEngine` actually enforces — only "Balanced" (1x) matches the real
+  policy today. Per-preference backend enforcement (loading a different
+  `GuardConfig` per request/user) is a real future change, not implemented
+  here, since `AppState.guard_engine` is currently a single process-wide
+  singleton built once at startup.

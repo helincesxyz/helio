@@ -2,12 +2,19 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from helio.guard.config import GuardConfig
 from helio.guard.context import GuardContext
 from helio.schemas.account import AccountState
 from helio.schemas.guard import GuardDecision, GuardRecord, GuardTradeIntent
 from helio.service.deps import AppState, get_app_state
 
 router = APIRouter(prefix="/guard", tags=["guard"])
+
+
+@router.get("/config", response_model=GuardConfig)
+def get_config(state: AppState = Depends(get_app_state)) -> GuardConfig:
+    """Read-only view of the active GATE 3 policy (never contains credentials)."""
+    return state.guard_engine.config
 
 
 @router.post("/evaluate", response_model=GuardDecision)

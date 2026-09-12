@@ -2,6 +2,7 @@ import { ConfidenceGauge } from "../../components/decision/ConfidenceGauge";
 import { EvidenceList } from "../../components/decision/EvidenceList";
 import { PriceChart } from "../../components/chart/PriceChart";
 import { EmptyState } from "../../components/common/EmptyState";
+import { HowHelioDecided } from "../../components/inspector/HowHelioDecided";
 import { useHelioData } from "../../context/HelioDataContext";
 import { formatRelativeTime, formatUsd, titleCase } from "../../lib/format";
 
@@ -67,6 +68,15 @@ export function Overview() {
         <p className="mb-5 max-w-2xl text-sm leading-relaxed text-ink-muted">{thesis.thesis}</p>
         <EvidenceList evidence={prepared_state.evidence} />
       </div>
+
+      <details className="group rounded-2xl border border-border">
+        <summary className="cursor-pointer list-none px-4 py-3 text-sm text-ink-muted transition-colors hover:text-ink">
+          How Helio decided
+        </summary>
+        <div className="border-t border-border px-4 py-5">
+          <HowHelioDecided record={thesisLatest} guardRecord={guardForLatest} />
+        </div>
+      </details>
     </div>
   );
 }

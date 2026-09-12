@@ -57,6 +57,25 @@ export function getRiskConfig(): Promise<RiskConfig> {
   return getJson<RiskConfig>("/risk/config");
 }
 
+// GATE 3's actual active policy (distinct from the older, generic /risk/config above).
+export interface GuardConfig {
+  policy_version: string;
+  allowed_symbols: string[];
+  allowed_instrument_types: string[];
+  max_leverage: number;
+  allowed_sides: string[];
+  max_simultaneous_positions: number;
+  max_notional_per_trade_usd: number;
+  max_daily_loss_usd: number;
+  max_portfolio_exposure_pct: number;
+  min_risk_reward: number;
+  min_confidence: number;
+}
+
+export function getGuardConfig(): Promise<GuardConfig> {
+  return getJson<GuardConfig>("/guard/config");
+}
+
 export interface EvidenceItem {
   name: string;
   passed: boolean;

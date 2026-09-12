@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
+import { LetHelioHandleIt } from "../../components/agent/LetHelioHandleIt";
 
 const TABS = [
   { to: "/strategy/overview", label: "Overview" },
@@ -9,6 +11,8 @@ const TABS = [
 ];
 
 export function StrategyLayout() {
+  const [showHandleIt, setShowHandleIt] = useState(false);
+
   return (
     <div className="mx-auto max-w-5xl px-10 py-10">
       <div className="flex items-start justify-between">
@@ -28,11 +32,10 @@ export function StrategyLayout() {
             Share
           </button>
           <button
-            disabled
-            title="Execution is not implemented yet"
-            className="cursor-not-allowed rounded-full bg-accent/30 px-4 py-1.5 text-xs font-medium text-white/60"
+            onClick={() => setShowHandleIt((v) => !v)}
+            className="rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-white transition-transform hover:scale-105"
           >
-            Automate
+            Let Helio handle it
           </button>
         </div>
       </div>
@@ -52,6 +55,12 @@ export function StrategyLayout() {
           </NavLink>
         ))}
       </nav>
+
+      {showHandleIt && (
+        <div className="pt-6">
+          <LetHelioHandleIt onClose={() => setShowHandleIt(false)} />
+        </div>
+      )}
 
       <div className="pt-8">
         <Outlet />

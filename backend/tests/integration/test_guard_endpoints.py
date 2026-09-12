@@ -122,6 +122,15 @@ def _guard_intent_payload(thesis_id: str, prepared: dict, confidence: float = 0.
     return payload
 
 
+def test_get_config_returns_active_policy(client: TestClient):
+    resp = client.get("/guard/config")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["allowed_symbols"] == ["BTC-USDT"]
+    assert body["max_notional_per_trade_usd"] == 100.0
+    assert body["policy_version"] == "guard_v1_test"
+
+
 def test_evaluate_approves_valid_intent(client: TestClient):
     thesis_id, prepared = _log_thesis(client, action="BUY", confidence=0.75)
     intent = _guard_intent_payload(thesis_id, prepared, confidence=0.75)

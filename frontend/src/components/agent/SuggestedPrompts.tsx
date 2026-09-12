@@ -1,9 +1,9 @@
-const PROMPTS = ["BTC breakout", "Explain the market", "Trade conservatively", "What are you waiting for?"];
+export const SUGGESTED_INTENTS = ["Optimize my money", "Get into BTC", "Earn on idle money", "Find an opportunity"];
 
 export function SuggestedPrompts({ onSelect }: { onSelect: (prompt: string) => void }) {
   return (
     <div className="mt-6 flex flex-wrap justify-center gap-2">
-      {PROMPTS.map((prompt) => (
+      {SUGGESTED_INTENTS.map((prompt) => (
         <button
           key={prompt}
           onClick={() => onSelect(prompt)}
