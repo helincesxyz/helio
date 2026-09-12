@@ -13,9 +13,9 @@ const METRIC_LABELS = [
 ];
 
 export function Performance() {
-  // GATE 4 (execution) does not exist yet, so there are no real trade
-  // outcomes anywhere in the system to compute these metrics from. Never
-  // fabricate — always show the honest empty state.
+  // No trade has actually filled and been verified yet, so there are no
+  // real outcomes anywhere in the system to compute these metrics from.
+  // Never fabricate — always show the honest empty state.
   return (
     <div className="flex flex-col gap-8">
       <div className="grid grid-cols-3 gap-6 opacity-30 sm:grid-cols-5">
@@ -28,7 +28,7 @@ export function Performance() {
       </div>
       <EmptyState
         title="No performance history yet"
-        description="Helio hasn't executed any trades yet — live execution isn't wired up in this version. Performance metrics will appear here once real trade outcomes exist."
+        description="Helio hasn't completed a real trade yet, so there's nothing real to measure. These numbers will fill in once an actual trade goes through and is confirmed."
       />
     </div>
   );

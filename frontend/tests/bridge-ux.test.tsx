@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { AllocationComparison } from "../src/components/agent/AllocationComparison";
 import { ApyComparison } from "../src/components/agent/ApyComparison";
 import { explainWhy, isWhyFollowUp } from "../src/lib/summarize";
+import { formatBtcQuantity } from "../src/lib/format";
 import type { ThesisRecord } from "../src/api/client";
 
 function makeRecord(overrides: {
@@ -84,6 +85,23 @@ describe("AllocationComparison", () => {
     render(<AllocationComparison comparison={{ cash: { amount: 500, ccy: "USDT" }, trade: { action: "WAIT", confidence: 0.4 } }} />);
     expect(screen.getByText(/Sitting in cash/i)).toBeInTheDocument();
     expect(screen.queryByText(/Real OKX Earn rate/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("formatBtcQuantity", () => {
+  it("never renders scientific notation for tiny amounts", () => {
+    expect(formatBtcQuantity("0.00008607")).toBe("0.00008607");
+    expect(formatBtcQuantity(String(5 / 58091))).not.toMatch(/e-?\d/i);
+  });
+
+  it("trims trailing zeros", () => {
+    expect(formatBtcQuantity("0.00100000")).toBe("0.001");
+    expect(formatBtcQuantity("0.00000000")).toBe("0");
+  });
+
+  it("shows a dash for missing values", () => {
+    expect(formatBtcQuantity(null)).toBe("—");
+    expect(formatBtcQuantity(undefined)).toBe("—");
   });
 });
 

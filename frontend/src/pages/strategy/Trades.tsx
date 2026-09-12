@@ -1,9 +1,18 @@
 import { useEffect, useState } from "react";
 import { getExecutions, type ExecutionLifecycle } from "../../api/client";
 import { EmptyState } from "../../components/common/EmptyState";
-import { formatRelativeTime } from "../../lib/format";
+import { formatBtcQuantity, formatRelativeTime } from "../../lib/format";
 
-const COLUMNS = ["Date", "Origin", "Side", "Quantity", "Status", "Order ID", "Mode"];
+const COLUMNS = ["Date", "Type", "Trade ID", "Amount (BTC)", "Status", "Order ID", "Mode"];
+
+const STATUS_LABELS: Record<string, string> = {
+  FILLED: "Filled",
+  PARTIALLY_FILLED: "Partially filled",
+  SUBMITTED: "Submitted",
+  LIVE: "Live",
+  REJECTED: "Rejected",
+  UNKNOWN: "Needs review",
+};
 
 export function Trades() {
   const [executions, setExecutions] = useState<ExecutionLifecycle[] | null>(null);
@@ -37,7 +46,7 @@ export function Trades() {
       ) : executions.length === 0 ? (
         <EmptyState
           title="No live trades yet."
-          description="Every execution here traces to a real Gate 3 APPROVE — nothing is fabricated. Trades are labeled honestly: an Execution test (this milestone's manual Gate 4 flow) is not the same as an Autonomous strategy (not built yet)."
+          description="Nothing here is ever made up. Every attempt is checked against your risk limits first, and it's always labeled honestly as either a manual test run or something Helio did on its own — those aren't the same thing yet."
         />
       ) : (
         <div className="flex flex-col gap-2">
@@ -52,13 +61,13 @@ export function Trades() {
                       : "border-accent text-accent-strong"
                   }`}
                 >
-                  {exec.origin === "execution_test" ? "Execution test" : "Autonomous strategy"}
+                  {exec.origin === "execution_test" ? "Test run" : "Done automatically"}
                 </span>
               </p>
-              <p className="text-ink">{exec.trade_intent_id.slice(0, 8)}</p>
-              <p className="text-ink-muted">{exec.filled_quantity ?? exec.requested_quantity}</p>
+              <p className="text-ink-faint">{exec.trade_intent_id.slice(0, 8)}</p>
+              <p className="text-ink-muted">{formatBtcQuantity(exec.filled_quantity ?? exec.requested_quantity)}</p>
               <p className={exec.status === "FILLED" ? "text-positive" : exec.status === "REJECTED" ? "text-negative" : "text-ink-muted"}>
-                {exec.status ?? "AUTHORIZED"}
+                {exec.status ? (STATUS_LABELS[exec.status] ?? exec.status) : "Waiting"}
               </p>
               <p className="text-ink-faint">{exec.okx_order_id ?? "—"}</p>
               <p className="text-ink-faint">{exec.mode ?? "—"}</p>

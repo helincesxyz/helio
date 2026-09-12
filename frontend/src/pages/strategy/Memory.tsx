@@ -7,7 +7,7 @@ export function Memory() {
   return (
     <EmptyState
       title="Helio hasn't changed its strategy yet."
-      description="Learning begins after verified trade outcomes. Once GATE 4 (execution) exists and produces real results, strategy revisions will appear here as a timeline — e.g. threshold changes, with the observed evidence behind each one."
+      description="Helio learns from real, completed trades — it hasn't finished enough of them yet to have anything to learn from. Once it does, changes will show up here as a timeline, with the evidence behind each one."
     />
   );
 }

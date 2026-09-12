@@ -26,6 +26,15 @@ export function formatRelativeTime(iso: string): string {
   return `${diffDay}d ago`;
 }
 
+export function formatBtcQuantity(value: string | null | undefined): string {
+  if (value === null || value === undefined) return "—";
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  // toFixed always returns plain decimal notation (never "8.607e-05"),
+  // which raw string/Number display can produce for very small BTC amounts.
+  return n.toFixed(8).replace(/0+$/, "").replace(/\.$/, "");
+}
+
 export function titleCase(s: string): string {
   return s
     .replace(/_/g, " ")

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getExecutions, type ExecutionLifecycle, type GuardRecord, type ThesisRecord } from "../../api/client";
 import { useHelioData } from "../../context/HelioDataContext";
-import { formatRelativeTime, formatUsd, titleCase } from "../../lib/format";
+import { formatBtcQuantity, formatRelativeTime, formatUsd, titleCase } from "../../lib/format";
 
 function equity(balances: { ccy: string; total: string }[]): number {
   return balances
@@ -47,7 +47,7 @@ export function HowHelioDecided({ record, guardRecord }: { record: ThesisRecord;
             title: "Execution",
             lines: [
               `${execution.status ?? "AUTHORIZED"} (${execution.mode ?? "not yet prepared"})`,
-              execution.origin === "execution_test" ? "Execution test" : "Autonomous strategy",
+              execution.origin === "execution_test" ? "Test run" : "Done automatically",
             ],
             source: "GATE 4 — ACT",
           };
@@ -61,7 +61,7 @@ export function HowHelioDecided({ record, guardRecord }: { record: ThesisRecord;
             title: "Verification",
             lines: [
               execution.okx_order_id ? `Order ${execution.okx_order_id}` : "No order id",
-              execution.filled_quantity ? `Filled ${execution.filled_quantity}` : "Not filled",
+              execution.filled_quantity ? `Filled ${formatBtcQuantity(execution.filled_quantity)} BTC` : "Not filled",
             ],
             source: "GATE 4 — ACT",
           }
