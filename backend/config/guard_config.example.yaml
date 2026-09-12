@@ -1,0 +1,29 @@
+# Copy to guard_config.yaml (gitignored) and adjust before running Helio.
+# This is GATE 3's deterministic risk policy — the layer that must approve
+# a trade intent before it can ever reach OKX. It never uses an LLM.
+
+policy_version: guard_v1
+
+allowed_symbols:
+  - BTC-USDT
+allowed_instrument_types:
+  - SPOT
+max_leverage: 1.0
+allowed_sides:
+  - buy
+max_simultaneous_positions: 1
+
+max_notional_per_trade_usd: 100.0
+max_daily_loss_usd: 50.0
+max_portfolio_exposure_pct: 20.0
+min_risk_reward: 1.5
+min_confidence: 0.6
+
+max_market_data_age_seconds: 900
+max_account_state_age_seconds: 900
+
+# BTC-USDT spot instrument spec — confirmed live via market_get_instruments.
+# lotSz: smallest increment an order size may vary by.
+# minSz: smallest order size accepted.
+lot_size: "0.00000001"
+min_size: "0.00001"

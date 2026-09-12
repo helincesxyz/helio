@@ -18,6 +18,7 @@ class HelioSettings(BaseSettings):
     mode: Literal["simulation", "live"] = "simulation"
     log_level: str = "info"
     risk_config_path: Path = Path("backend/config/risk_config.yaml")
+    guard_config_path: Path = Path("backend/config/guard_config.yaml")
     db_path: Path = Path("backend/helio.sqlite3")
     service_port: int = 8787
 

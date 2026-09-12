@@ -81,9 +81,26 @@ JSON that Claude Code already received back from an MCP tool call.
   validates (contradiction/hallucination checks) before logging to a
   dedicated `ThesisStore`. Same credential-blind, LLM-blind pattern as the
   rest of Helio — see [THESIS_PROTOCOL.md](THESIS_PROTOCOL.md).
+- **`backend/src/helio/guard/`** (GATE 3: PROTECT) — the deterministic
+  safety layer between a Thesis-derived `GuardTradeIntent` and OKX
+  execution. No LLM anywhere in this package. `guard/rules.py` implements
+  ~20 named, documented checks (allowed symbol, spot-only, no leverage, no
+  shorting, max simultaneous position, max notional, daily loss limit,
+  portfolio exposure cap, invalidation/stop sanity, minimum risk/reward,
+  market-data and account-state freshness, thesis linkage/validity, a WAIT
+  thesis can never reach this layer, exchange lot-size/minimum-size
+  precision, confidence threshold, duplicate-intent detection, and a
+  cross-check that the intent's self-reported confidence actually matches
+  the linked thesis). `guard/engine.py`'s `GuardEngine.evaluate()` runs
+  every rule regardless of earlier failures (so a rejection always lists
+  every applicable violation, not just the first) and wraps each rule call
+  so an unexpected exception becomes a FAIL rather than an uncaught
+  approval. Every evaluation — approved or rejected — is logged to a
+  dedicated `GuardStore`. See [GUARD_PROTOCOL.md](GUARD_PROTOCOL.md).
 - **[AGENT_PROTOCOL.md](AGENT_PROTOCOL.md)** / **[THESIS_PROTOCOL.md](THESIS_PROTOCOL.md)**
-  — the actual contracts for how Claude Code sequences MCP calls and Helio
-  API calls. As load-bearing as any code file here.
+  / **[GUARD_PROTOCOL.md](GUARD_PROTOCOL.md)** — the actual contracts for
+  how Claude Code sequences MCP calls and Helio API calls. As load-bearing
+  as any code file here.
 
 ## Limitations
 
@@ -99,3 +116,11 @@ JSON that Claude Code already received back from an MCP tool call.
   (BUY/WAIT + evidence) — it does not place orders. That wiring is
   deliberately out of scope until a later gate, and execution-tool access
   is intentionally not given to the agent for this pass.
+- GATE 3's `GuardEngine` can only APPROVE or REJECT a trade intent — an
+  APPROVE does not (yet) cause anything to execute. Wiring an approved
+  intent to an actual OKX order-placement MCP call is explicitly deferred
+  to a later gate, under its own opt-in configuration.
+- GATE 3's risk policy is a single, conservative starting point (BTC-USDT
+  spot, long-only, one position, small notional/exposure caps). It is not
+  tuned or backtested — the numeric thresholds are documented, sane
+  defaults meant to be adjusted via `backend/config/guard_config.yaml`.

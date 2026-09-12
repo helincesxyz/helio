@@ -101,3 +101,29 @@ cross-check within a documented tolerance).
 
 **ThesisRecord**: what `/thesis/latest` and `/thesis/history` return —
 `decision_id, logged_at, thesis, prepared_state, validation`.
+
+## GATE 3 (PROTECT) schemas — `backend/src/helio/schemas/guard.py`
+
+**GuardTradeIntent**: the normalized trade proposal a `GuardEngine` may
+evaluate — `trade_intent_id`, `symbol`, `side` (`buy|sell`), `order_type`,
+`instrument_type` (default `SPOT`), `leverage?`, `requested_notional`,
+`requested_quantity`, `entry_price` (all decimal-as-string), `invalidation?
+{condition, price?}`, `target? {price?}` (reuses `schemas.thesis.Invalidation`/
+`Target`), `strategy`, `strategy_version`, `thesis_id` (links to a
+`ThesisRecord.decision_id`), `confidence` (float, `[0,1]`), `timestamp`.
+
+**GuardCheck**: `name, status (PASS|FAIL), reason` — one per rule in
+`guard/rules.py`, always populated (even on PASS) for full auditability.
+
+**GuardRiskSummary**: `requested_notional, max_allowed_notional,
+estimated_loss?, risk_reward?` — computed by the engine regardless of the
+final decision, for display/logging.
+
+**GuardDecision**: `decision (APPROVE|REJECT), trade_intent_id, checks:
+GuardCheck[], risk_summary, rejection_reasons: string[], policy_version,
+evaluated_at`. A REJECT always carries at least one explicit reason; an
+APPROVE means every check passed.
+
+**GuardRecord**: what `/guard/latest`, `/guard/history`, and
+`/guard/for-thesis/{id}` return — `trade_intent_id, logged_at, trade_intent,
+decision`.

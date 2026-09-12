@@ -23,6 +23,7 @@ def init_config() -> None:
     pairs = [
         (_CONFIG_DIR / "risk_config.example.yaml", _CONFIG_DIR / "risk_config.yaml"),
         (_CONFIG_DIR / "strategy_config.example.yaml", _CONFIG_DIR / "strategy_config.yaml"),
+        (_CONFIG_DIR / "guard_config.example.yaml", _CONFIG_DIR / "guard_config.yaml"),
     ]
     for src, dst in pairs:
         if dst.exists():

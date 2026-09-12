@@ -8,6 +8,9 @@ from helio.learning.store import EventStore
 from helio.logging_utils import configure_logging
 from helio.risk.config_loader import load_risk_config
 from helio.risk.engine import RiskEngine
+from helio.guard.config import GuardConfig, load_guard_config
+from helio.guard.engine import GuardEngine
+from helio.guard.store import GuardStore
 from helio.schemas.account import AccountState
 from helio.schemas.market import MarketSnapshot
 from helio.schemas.thesis import PreparedMarketState
@@ -32,6 +35,8 @@ class AppState:
     verify_rows: dict[str, VerifyRow] = field(default_factory=dict)
     latest_thesis_state: dict[str, PreparedMarketState] = field(default_factory=dict)
     thesis_store: ThesisStore | None = None
+    guard_engine: GuardEngine | None = None
+    guard_store: GuardStore | None = None
 
 
 _state: AppState | None = None
@@ -41,11 +46,14 @@ def build_app_state() -> AppState:
     settings = get_settings()
     configure_logging(settings.log_level)
     risk_config = load_risk_config(settings.risk_config_path)
+    guard_config = load_guard_config(settings.guard_config_path)
     return AppState(
         settings=settings,
         risk_engine=RiskEngine(risk_config),
         event_store=EventStore(settings.db_path),
         thesis_store=ThesisStore(settings.db_path),
+        guard_engine=GuardEngine(guard_config),
+        guard_store=GuardStore(settings.db_path),
     )
 
 

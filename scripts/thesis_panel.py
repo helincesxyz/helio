@@ -36,7 +36,7 @@ def _get_json(url: str, timeout: float) -> dict:
         return json.load(resp)
 
 
-def _render(record: dict) -> str:
+def _render(record: dict, guard_record: dict | None) -> str:
     thesis = record["thesis"]
     prepared = record["prepared_state"]
 
@@ -83,6 +83,16 @@ def _render(record: dict) -> str:
         "ACTION",
         thesis["action"],
         "",
+    ]
+
+    if guard_record is not None:
+        decision = guard_record["decision"]
+        if decision["decision"] == "APPROVE":
+            lines += ["RISK CHECK", "✓ APPROVED", ""]
+        else:
+            lines += ["RISK CHECK", "✕ REJECTED", "", "WHY", decision["rejection_reasons"][0], ""]
+
+    lines += [
         "CONFIDENCE",
         f"{thesis['confidence']:.2f}",
         "",
@@ -122,7 +132,15 @@ def main() -> int:
         print(f"Could not reach Helio service at {args.base_url}: {exc}")
         return 1
 
-    print(_render(record))
+    guard_record = None
+    try:
+        guard_record = _get_json(f"{args.base_url}/guard/for-thesis/{record['decision_id']}", args.timeout)
+    except urllib.error.HTTPError:
+        pass  # no risk evaluation logged yet for this thesis — that's fine, just omit the section
+    except (urllib.error.URLError, TimeoutError):
+        pass
+
+    print(_render(record, guard_record))
     return 0
 
 

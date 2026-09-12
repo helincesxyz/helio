@@ -70,6 +70,15 @@ class ThesisStore:
         records = self.get_by_symbol(symbol, limit=1)
         return records[0] if records else None
 
+    def get_by_id(self, decision_id: str) -> ThesisRecord | None:
+        with closing(self._connect()) as conn:
+            row = conn.execute(
+                "SELECT decision_id, thesis_json, prepared_state_json, validation_json, logged_at "
+                "FROM thesis_events WHERE decision_id = ?",
+                (decision_id,),
+            ).fetchone()
+        return self._row_to_record(row) if row else None
+
     def self_test(self) -> bool:
         test_id = f"selftest-{datetime.now(timezone.utc).timestamp()}"
         with closing(self._connect()) as conn:
