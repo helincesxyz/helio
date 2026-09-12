@@ -1,0 +1,7 @@
+# Copy to strategy_config.yaml (gitignored) to tune the example strategy.
+
+sma_crossover_v1:
+  symbol: BTC-USDT
+  fast_period: 10
+  slow_period: 30
+  order_notional_usd: 50

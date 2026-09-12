@@ -1,0 +1,35 @@
+# --- Secrets: never commit these ---
+.env
+*.env.local
+.okx/
+**/*.pem
+**/*.key
+
+# --- Python ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+
+# --- Node / frontend ---
+node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/tsconfig.tsbuildinfo
+
+# --- Data / runtime ---
+*.sqlite3
+*.db
+backend/config/risk_config.yaml
+backend/config/strategy_config.yaml
+
+# --- OS / editor ---
+.DS_Store
+.idea/
+.vscode/

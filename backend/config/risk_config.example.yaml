@@ -1,0 +1,24 @@
+# Copy this file to risk_config.yaml (gitignored) and adjust before running Helio.
+# risk_config.yaml is where you set your real limits — it is never committed.
+
+# Hard gate: a "live" TradeIntent is rejected unless this is explicitly true.
+# Flipping this on is the ONLY way live orders can ever be approved.
+allow_live: false
+
+allowed_instrument_types:
+  - SPOT
+
+allowed_instruments:
+  - BTC-USDT
+  - ETH-USDT
+
+max_order_notional_usd: 100
+max_position_size_usd: 500
+max_open_positions: 5
+max_leverage: 3
+max_daily_loss_usd: 50
+exposure_cap_pct_of_equity: 20
+
+# v1 stub — logged as a warning-only rule, never blocks. Reserved for a future
+# rule that requires strategies to attach a stop-loss rationale.
+require_stop_loss_rationale: false

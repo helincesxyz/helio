@@ -1,0 +1,13 @@
+allow_live: false
+allowed_instrument_types:
+  - SPOT
+allowed_instruments:
+  - BTC-USDT
+  - ETH-USDT
+max_order_notional_usd: 100
+max_position_size_usd: 500
+max_open_positions: 2
+max_leverage: 3
+max_daily_loss_usd: 50
+exposure_cap_pct_of_equity: 20
+require_stop_loss_rationale: false
